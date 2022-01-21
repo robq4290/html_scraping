@@ -1,0 +1,75 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rvest)
+library(htmltools)
+library(here)
+library(glue)
+
+wiki_root_url <- "https://rupaulsdragrace.fandom.com/wiki/"
+```
+
+```{r initial url}
+hytes_url <- glue("{wiki_root_url}Category:House_of_Hytes")
+hytes_url
+```
+
+```{r}
+hytes_results <-read_html(hytes_url)
+hytes_results
+```
+
+```{r}
+hytes_names <- hytes_results %>% 
+  html_nodes(".category-page__member") %>% 
+  html_text() %>% 
+  str_replace_all( "[\t\n]" , "")
+  
+```
+
+```{r}
+hytes_names_df <- as.data.frame(hytes_names)
+```
+
+```{r}
+hytes_family_nodes <- expand.grid(hytes_names_df[[1]],hytes_names_df[[1]]) %>% 
+  rename( "queen_1"=1
+         ,"queen_2"=2) %>% 
+  mutate( drag_family="Hytes"
+         ,drag_mother=hytes_names_df[[1]][1] )%>%
+  select(drag_family,drag_mother,queen_1,queen_2) %>% 
+  filter(queen_1!=queen_2) 
+hytes_family_nodes
+```
+
+# House of Minj
+```{r This would be too much work }
+minj_url <- glue("{wiki_root_url}Category:House_of_Minj")
+minj_results <-read_html(minj_url)
+minj_names <- minj_results %>% 
+  html_nodes(".mw-parser-output") %>% 
+  html_text()%>% 
+  str_replace_all( "[\t\n]" , "") 
+minj_names
+```
+
+# All Drag Families 
+```{r}
+drag_house_url <- glue("{wiki_root_url}Category:Queens_by_Drag_House")
+drag_house_results <- read_html(drag_house_url)
+
+drag_house_names <- drag_house_results %>% 
+  html_nodes(".category-page__member-link") %>% 
+  html_text() 
+
+drag_house_urls <-  drag_house_results %>% 
+  html_nodes(".category-page__member") %>% 
+  html_text("href") 
+drag_house_names
+```
+
