@@ -1,0 +1,28 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(DBI)
+library(here)
+library(glue)
+library(rvest) # harvesting websites
+library(htmltools)
+tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+## Example
+
+### Import data
+
+The following procedural example is based on documentation found at the [`rvest`](https://rvest.tidyverse.org/) documentation site.
+
+#### Import a webpage using `read_html`
+
+```{r}
+results <- read_html("http://www.vondel.humanities.uva.nl/ecartico/persons/index.php?subtask=browse")
+```
+
