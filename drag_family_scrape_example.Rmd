@@ -29,7 +29,7 @@ hytes_names <- hytes_results %>%
   html_nodes(".category-page__member") %>% 
   html_text() %>% 
   str_replace_all( "[\t\n]" , "")
-  
+  hytes_names
 ```
 
 ```{r}
@@ -69,7 +69,42 @@ drag_house_names <- drag_house_results %>%
 
 drag_house_urls <-  drag_house_results %>% 
   html_nodes(".category-page__member") %>% 
-  html_text("href") 
-drag_house_names
+  html_text("href")%>% 
+  str_replace_all( "[\t\n]" , "") %>% 
+  str_replace_all(" ","_") %>% 
+  as.data.frame() %>% 
+  rename("url_end"=1)
+
+drag_house_frame <- tibble(wiki_root_url,drag_house_urls) %>% 
+  mutate(family_url=as.character(glue("{wiki_root_url}{url_end}"))
+         , family_name=str_replace(url_end,"Category:","")
+         , family_name=str_replace_all(family_name,"_"," ")
+         )
+
+```
+
+```{r}
+n_row <- nrow(drag_house_frame)
+
+
+for(i in 1:n_row){
+  
+  results <- read_html(drag_house_frame$family_url[[i]] )
+  
+  result_string <-results %>% 
+    html_nodes(".category-page__member") %>% 
+    html_text() %>% 
+    str_replace_all( "[\t\n]" , "")
+  
+ 
+  
+  drag_house_frame$all_names[[i]]=result_string
+  
+}
+
+```
+ 
+```{r}
+unlist(drag_house_frame$all_names[[1]])
 ```
 
