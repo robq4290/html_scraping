@@ -14,50 +14,6 @@ library(glue)
 wiki_root_url <- "https://rupaulsdragrace.fandom.com/wiki/"
 ```
 
-```{r initial url for testing, include=FALSE}
-hytes_url <- glue("{wiki_root_url}Category:House_of_Hytes")
-hytes_url
-```
-
-```{r initial html results for the hytes, include=FALSE}
-hytes_results <-read_html(hytes_url)
-hytes_results
-```
-
-```{r initial attempt to get all of the names of members, include=FALSE}
-hytes_names <- hytes_results %>% 
-  html_nodes(".category-page__member") %>% 
-  html_text() %>% 
-  str_replace_all( "[\t\n]" , "")
-  hytes_names
-```
-
-```{r converting into a dataframe so I can try and make cartesian product, inclulde=FALSE}
-hytes_names_df <- as.data.frame(hytes_names)
-```
-
-```{r working example of the linked data, include=FALSE}
-hytes_family_nodes <- expand.grid(hytes_names_df[[1]],hytes_names_df[[1]]) %>% 
-  rename( "queen_1"=1
-         ,"queen_2"=2) %>% 
-  mutate( drag_family="Hytes"
-         ,drag_mother=hytes_names_df[[1]][1] )%>%
-  select(drag_family,drag_mother,queen_1,queen_2) %>% 
-  filter(queen_1!=queen_2) 
-hytes_family_nodes
-```
-
-# House of Minj
-```{r This would be too much work, echo=FALSE, include=FALSE, eval=FALSE }
-minj_url <- glue("{wiki_root_url}Category:House_of_Minj")
-minj_results <-read_html(minj_url)
-minj_names <- minj_results %>% 
-  html_nodes(".mw-parser-output") %>% 
-  html_text()%>% 
-  str_replace_all( "[\t\n]" , "") 
-minj_names
-```
-
 # All Drag Families 
 
 ## Getting the data together 
@@ -74,6 +30,7 @@ one second..
 gotta do the same for the template page... just empty
 ```{r}
 drag_house_url <- glue("{wiki_root_url}Category:Queens_by_Drag_House")
+
 drag_house_results <- read_html(drag_house_url)
 
 drag_house_names <- drag_house_results %>% 
@@ -93,14 +50,14 @@ drag_house_frame <- tibble(wiki_root_url,drag_house_urls) %>%
          , family_name=str_replace(url_end,"Category:","")
          , family_name=str_replace_all(family_name,"_"," ")
          ) %>% 
-  filter(!(url_end %in% c("Category:House_of_Stupi","Template (Family Tree)"))
+  filter(!(url_end %in% c("Category:House_of_Stupi","Category:Template_(Family_Tree)"))
          ) %>% 
-  mutate( html_results = map(  drag_house_frame$family_url
+  mutate( html_results = map( family_url
                              , ~ {.x %>%
                                      read_html()
                                   }
                              )
-         , all_names=map(   drag_house_frame$html_results
+         , all_names=map( html_results
                         , ~{.x %>% 
                               html_nodes(".category-page__member") %>% 
                               html_text() %>% 
