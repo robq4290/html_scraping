@@ -41,7 +41,7 @@ drag_house_urls <-  drag_house_results %>%
   html_nodes(".category-page__member") %>% 
   html_text("href")%>% 
   str_replace_all( "[\t\n]" , "") %>% 
-  str_replace_all(" ","_") %>% 
+  str_replace_all(" ","_") %>% # cleaning up the URLs 
   as.data.frame() %>% 
   rename("url_end"=1)
 
@@ -71,59 +71,3 @@ drag_house_frame <- tibble(wiki_root_url,drag_house_urls) %>%
 
 
 ```
-
-## First Attempt: Write a loop
-
-I *KNOW* that a map function is better suited, but I needed to see how 
-this data was coming in on my own.
-
-Originally I thought it'd be easier to attach the resutls as list column in a 
-dataframe, but I'm going to have to unnest and then pivot... so I think it will be 
-easier to make a family data frame ( for all families ) and union all of the results
-toghter. 
-
-It would live on its own and can be updated when there are new queens 
-
-```{r looping to get results, include=FALSE}
-# n_row <- nrow(drag_house_frame)
-# 
-# for(i in 1:n_row){
-#     results <- read_html(drag_house_frame$family_url[[i]] )
-#     
-#     result_string <-results %>% 
-#     html_nodes(".category-page__member") %>% 
-#     html_text() %>% 
-#     str_replace_all( "[\t\n]" , "")
-#  
-#   drag_house_frame$all_names[[i]]=result_string
-#     
-# }
-
-```
- 
-## Second Attempt: Use a MAP functoin 
-```{r using map to get the html results, include=FALSE}
-family_results <- tibble(   family_name=drag_house_frame$family_name
-                          , html_results = map(drag_house_frame$family_url
-                                                                        , ~ {.x %>%
-                                                                                read_html()
-                                                                             }
-                                                                        )
-) 
-```
-
-```{r using map to get all of the names in the house and then unnesting them into one column, include=FALSE}
-family_results <- family_results %>% 
-  mutate(all_names=map(   family_results$html_results
-                        , ~{.x %>% 
-                              html_nodes(".category-page__member") %>% 
-                              html_text() %>% 
-                              str_replace_all( "[\t\n]" , "")
-                            }
-                       )
-         ) %>% 
-  select(-html_results) %>% 
-  unnest(all_names)
-```
-
-
