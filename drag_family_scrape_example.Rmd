@@ -79,7 +79,12 @@ drag_house_frame <- tibble(wiki_root_url,drag_house_urls) %>%
   mutate(family_url=as.character(glue("{wiki_root_url}{url_end}"))
          , family_name=str_replace(url_end,"Category:","")
          , family_name=str_replace_all(family_name,"_"," ")
-         )
+         ) %>% 
+  filter(url_end!="Category:House_of_Stupi") # this is an empty page
+  # Not elegant, need to do some more reading on how to handle and empty element.
+  # So far this has only happened for the house of stupi... hoping it is a one off 
+  # might have to make this a running list.... or maybe =check out the results 
+  # one second..
 
 ```
 
@@ -88,23 +93,24 @@ n_row <- nrow(drag_house_frame)
 
 
 for(i in 1:n_row){
-  
-  results <- read_html(drag_house_frame$family_url[[i]] )
-  
-  result_string <-results %>% 
+
+    print(i)
+    print(family_name)
+    results <- read_html(drag_house_frame$family_url[[i]] )
+    result_string <-results %>% 
     html_nodes(".category-page__member") %>% 
     html_text() %>% 
     str_replace_all( "[\t\n]" , "")
   
  
-  
+  #print(drag_house_frame$family_url[[i]] )
   drag_house_frame$all_names[[i]]=result_string
+    
+  
+  
+
   
 }
 
 ```
  
-```{r}
-unlist(drag_house_frame$all_names[[1]])
-```
-
