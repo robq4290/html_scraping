@@ -65,6 +65,13 @@ minj_names
 Combined the root url with the Queens by drag house url and 
 followed the pattern to extract the list of all url elements and 
 tunred it into a data frame that to be combined with the rest of teh data 
+
+this is an empty page
+Not elegant, need to do some more reading on how to handle and empty element.
+So far this has only happened for the house of stupi... hoping it is a one off
+might have to make this a running list.... or maybe =check out the results
+one second..
+gotta do the same for the template page... just empty
 ```{r}
 drag_house_url <- glue("{wiki_root_url}Category:Queens_by_Drag_House")
 drag_house_results <- read_html(drag_house_url)
@@ -86,11 +93,25 @@ drag_house_frame <- tibble(wiki_root_url,drag_house_urls) %>%
          , family_name=str_replace(url_end,"Category:","")
          , family_name=str_replace_all(family_name,"_"," ")
          ) %>% 
-  filter(url_end!="Category:House_of_Stupi") # this is an empty page
-  # Not elegant, need to do some more reading on how to handle and empty element.
-  # So far this has only happened for the house of stupi... hoping it is a one off 
-  # might have to make this a running list.... or maybe =check out the results 
-  # one second..
+  filter(!(url_end %in% c("Category:House_of_Stupi","Template (Family Tree)"))
+         ) %>% 
+  mutate( html_results = map(  drag_house_frame$family_url
+                             , ~ {.x %>%
+                                     read_html()
+                                  }
+                             )
+         , all_names=map(   drag_house_frame$html_results
+                        , ~{.x %>% 
+                              html_nodes(".category-page__member") %>% 
+                              html_text() %>% 
+                              str_replace_all( "[\t\n]" , "")
+                            }
+                       )
+         ) %>% 
+  select(-html_results) %>% 
+  unnest(all_names) 
+         
+
 
 ```
 
@@ -134,7 +155,7 @@ family_results <- tibble(   family_name=drag_house_frame$family_name
 ) 
 ```
 
-```{r using map to get all of the names in a list column, include=FALSE}
+```{r using map to get all of the names in the house and then unnesting them into one column, include=FALSE}
 family_results <- family_results %>% 
   mutate(all_names=map(   family_results$html_results
                         , ~{.x %>% 
@@ -143,8 +164,9 @@ family_results <- family_results %>%
                               str_replace_all( "[\t\n]" , "")
                             }
                        )
-         )
-
-
+         ) %>% 
+  select(-html_results) %>% 
+  unnest(all_names)
 ```
+
 
