@@ -67,7 +67,35 @@ drag_house_frame <- tibble(wiki_root_url,drag_house_urls) %>%
          ) %>% 
   select(-html_results) %>% 
   unnest(all_names) 
-         
+```
 
+```{r save the base results for good measure, echo=FALSE, include=FALSE}
+saveRDS(drag_house_frame,here::here("Output","drag_house_html_scrape_results.RDS"))
 
 ```
+
+
+```{r Look for queens with more than one drag family, echo=FALSE, include=TRUE}
+# Remove all scraping portions of the code and then create a cleaned up frame that 
+# can be used for creating a node graph
+# 
+# Add in flag to id if a queen is a member of more than one family
+# 
+# I will figure out better naming conventions when the frames are loaded into 
+# the in memory database
+drag_family_connections <- drag_house_frame %>% 
+  select(family_name, all_names) %>% 
+  group_by(all_names) %>% 
+  mutate(  mutliple_families=n()
+         , multiple_family_flg=case_when(mutliple_families>1~1,
+                                         TRUE~0)
+         )%>% 
+  ungroup()%>%
+  select(-mutliple_families)
+
+# Going to join this with the season data and create a flag for 
+# having a fellow drag sister on the show. Can be used as model input
+# Maybe there is a link of having a drag mother from a past season place high 
+
+```
+
