@@ -10,8 +10,15 @@ library(rvest)
 library(htmltools)
 library(here)
 library(glue)
+source(here::here("Functions","drag_family_html_functions.R"))
 
 wiki_root_url <- "https://rupaulsdragrace.fandom.com/wiki/"
+
+```
+
+
+```{r function test, echo=FALSE, include=FALSE}
+drag_data <- get_drag_family_data(wiki_root_url)
 ```
 
 # All Drag Families 
