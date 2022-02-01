@@ -10,6 +10,7 @@ library(rvest)
 library(htmltools)
 library(here)
 library(glue)
+library(janitor)
 source(here::here("Functions","drag_family_html_functions.R"))
 
 wiki_root_url <- "https://rupaulsdragrace.fandom.com/wiki/"
@@ -104,5 +105,127 @@ drag_family_connections <- drag_house_frame %>%
 # having a fellow drag sister on the show. Can be used as model input
 # Maybe there is a link of having a drag mother from a past season place high 
 
+```
+
+```{r}
+url_frame <- data.frame(season=seq(14)) %>% 
+  mutate(
+            base_url="https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_"
+          , episode_url="https://en.wikipedia.org/wiki/List_of_RuPaul%27s_Drag_Race_episodes")
+```
+
+
+
+```{r}
+url_frame <- data.frame(season=seq(14)) %>% 
+  mutate(
+            base_url="https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_"
+          )
+
+season_level_tables <- url_frame %>% 
+  mutate(  season_url=glue("{base_url}{season})")
+                    , season_tables=map(season_url, ~ { 
+                                                       .x %>% 
+                                                         read_html(season_url) %>% 
+                                                         html_nodes("table.wikitable") %>% 
+                                                         html_table(header=TRUE)
+                                                        }
+                                        )
+         ) %>% 
+  select(season, season_tables) %>% 
+  unnest(season_tables) %>% 
+  mutate(df_rows=map_dbl(season_tables,~{
+                                .x %>% 
+                                nrow() 
+                        })
+         , season=as.character(season)
+         , `Frame Names`=map(season_tables, ~{.x %>% 
+                                      names()
+                                    }
+                    )
+  )%>% 
+  filter(str_detect(`Frame Names`,"View"))
+
+
+```
+
+```{r}
+episode_url="https://en.wikipedia.org/wiki/List_of_RuPaul%27s_Drag_Race_episodes"
+
+series_level_episodes <-map_df(episode_url, ~ { 
+                                                       .x %>% 
+                                                         read_html(episode_url) %>% 
+                                                         html_node("table.wikitable") %>% 
+                                                         html_table(header=TRUE)
+                                                        }
+                                        
+          ) %>% 
+   select(2 , 4) %>% 
+   janitor::row_to_names(row=1) %>% 
+   rename(  "season"="Season"
+          , "episodes"="Episodes" )
+```
+
+
+```{r}
+viewer_test <-season_level_tables %>% 
+  left_join(series_level_episodes, by=c("season")) %>% 
+  mutate(`Row Equiality Check(for viewers)`=case_when(df_rows==episodes~1
+                                                      , TRUE~-0
+                                                      )
+         ) %>% 
+  filter(`Row Equiality Check(for viewers)`==1) %>% 
+  mutate() 
+```
+
+
+```{r}
+# This will always be the first table from the wikipedia 
+episode_frame<- url_frame$season_episodes[[1]]
+```
+
+```{r}
+
+
+drag_wiki <- "https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_13)"
+
+wiki_data <- read_html(drag_wiki) %>% 
+  html_nodes("table.wikitable") %>% 
+  html_table(header=TRUE)
+# can loop through and use the frame that is the same size as the number of episodes in the number of rows
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+library(rvest)
+# Reading in the table from Wikipedia
+page = read_html("https://en.wikipedia.org/wiki/List_of_U.S._states_by_life_expectancy")
+# Obtain the piece of the web page that corresponds to the "wikitable" node
+my.table = html_node(page, ".wikitable")
+# Convert the html table element into a data frame
+my.table = html_table(my.table, fill = TRUE)
+# Extracting and tidying a single column from the table and adding row names
+x = as.numeric(gsub("\\[.*","",my.table[,4]))
+names(x) = gsub("\\[.*","",my.table[,2])
+# Excluding non-states and averages from the table
+life.expectancy = x[!names(x) %in% c("United States", "Northern Mariana Islands", "Guam", "American Samoa", "Puerto Rico", "U.S. Virgin Islands")]
 ```
 
