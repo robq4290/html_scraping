@@ -168,7 +168,7 @@ viewership <- bind_rows(split(season_level_tables$season_tables,season_level_tab
 ```{r getting all episode level data, echo=FALSE, include=FALSE}
 episode_url="https://en.wikipedia.org/wiki/List_of_RuPaul%27s_Drag_Race_episodes"
 
-season_level_episodes <-map_df(episode_url, ~ { 
+season_episode_count <-map_df(episode_url, ~ { 
                                                        .x %>% 
                                                          read_html(episode_url) %>% 
                                                          html_node("table.wikitable") %>% 
@@ -176,10 +176,25 @@ season_level_episodes <-map_df(episode_url, ~ {
                                                         }
                                         
           ) %>% 
-   select(2 , 4) %>% 
-   janitor::row_to_names(row=1) %>% 
-   rename(  "season"="Season"
-          , "episodes"="Episodes" )
+  select(2,3,5,6)%>% 
+  janitor::row_to_names(row=1)%>% 
+  rename(  "season"="Season"
+          , "episodes"="Episodes"
+          , "season_start"="First aired"
+          , "season_end"="Last aired") %>% 
+  # mutate(  season_start=str_extract(season_start, "[^(]+$")
+  #        , season_end=str_extract(season_end, "[^(]+$")
+  #   ) %>%
+  mutate_at(.vars=c("season_start","season_end")
+            , str_extract
+            ,"[^(]+$"
+            ) %>% 
+  mutate_at(.vars=c("season_start","season_end")
+            ,str_replace
+            ,"[)]"
+            ,""
+            )
+
 ```
 
 ```{r}
