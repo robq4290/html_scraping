@@ -12,13 +12,11 @@ library(here)
 library(glue)
 library(janitor)
 source(here::here("Functions","drag_family_html_functions.R"))
-
-wiki_root_url <- "https://rupaulsdragrace.fandom.com/wiki/"
-
 ```
 
 
 ```{r function test, echo=FALSE, include=FALSE}
+wiki_root_url <- "https://rupaulsdragrace.fandom.com/wiki/"
 drag_data <- get_drag_family_data(wiki_root_url)
 ```
 
@@ -79,7 +77,6 @@ drag_house_frame <- tibble(wiki_root_url,drag_house_urls) %>%
 
 ```{r save the base results for good measure, echo=FALSE, include=FALSE}
 saveRDS(drag_house_frame,here::here("Output","drag_house_html_scrape_results.RDS"))
-
 ```
 
 
@@ -229,18 +226,17 @@ episode_and_season <- episode_table %>%
   left_join( season_start_to_end
             ,by=c("air_date"="season_start")
             ) %>%
-  fill(season) # Default direction to fill is down
+  fill(season) %>%  # Default direction to fill is down
+  mutate_at( "air_date"
+            ,str_squish  # will need to figure out why this needs to be used... but that is for another day
+            )
 ```
 
-```{r Joining episode and season with viewership}
-# Start here and clean up some of the white space in the air_date column 
-# or... mutate them so that they're smushed  togeter or in a different date format 
-right_join(viewership, episode_table, by=c("air_date"))
+```{r}
+episode_viewer <- episode_and_season %>% 
+  left_join( viewership
+            , by=c("air_date","Title") 
+            )
 ```
 
-
-```{r check to see if theres a qiuck way to get viewership joined with episodes}
-test_join <- inner_join(viewership, episode_tables, by=c("Title","air_date"))
-
-```
 
