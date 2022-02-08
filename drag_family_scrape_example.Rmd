@@ -149,13 +149,16 @@ season_level_tables <- url_frame %>%
 viewership <- bind_rows(split(season_level_tables$season_tables,season_level_tables$season )) %>% 
   select(  `Episode`=`No.`
          , `Title`
+         , `air_date`=`Air date`
          , `Rating`=`Rating(18–49)`
          , `Viewers`=`Viewers(millions)`
          ) %>%
   # Extract the digits and then convert to doubles
-  mutate(  `Rating`=substr(`Rating`,1,4)
-         , `Viewers`=substr(`Viewers`,1,5) 
-         ) %>% 
+  mutate_at( c("Rating","Viewers")
+            , str_replace
+            , "\\[[^\\]]*\\]\\s*" # Need to figure out why this regex works...but it does!
+            ,""
+            ) %>%  
   mutate_at(c("Rating","Viewers"), as.double) %>% 
   mutate(
             `Viewers`=`Viewers`*1000000
@@ -193,7 +196,8 @@ season_episode_count <-map_df(episode_url, ~ {
             ,str_replace
             ,"[)]"
             ,""
-            )
+            ) %>% 
+  mutate_at("episodes",as.double)
 
 ```
 
@@ -208,38 +212,49 @@ episode_tables <-map_dfr(episode_url, ~ {
                                                         }
                      ) %>% 
   filter(!is.na(`No.overall`)) %>% 
-  select(`No.overall`:`Original air date`)
+  select(`No.overall`:`Original air date`) %>%
+  rename("air_date"="Original air date") %>% 
+  mutate_at("air_date"
+            , str_extract
+            ,"[^(]+$"
+            ) %>% 
+  mutate_at("air_date"
+            , str_replace
+            ,"[)]"
+            ,""
+            ) %>% 
+  mutate_at( "Title"
+            , str_replace
+            , "\\[[^\\]]*\\]\\s*" # Need to figure out why this regex works...but it does!
+            ,""
+            ) %>% 
+  mutate(air_date=format(as.Date(air_date), "%B %d, %Y"
+                         )
+  )
+
+```
+
+```{r check to see if theres a qiuck way to get viewership joined with episodes}
+test_join <- inner_join(viewership, episode_tables, by=c("Title","air_date"))
 
 ```
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-library(rvest)
-# Reading in the table from Wikipedia
-page = read_html("https://en.wikipedia.org/wiki/List_of_U.S._states_by_life_expectancy")
-# Obtain the piece of the web page that corresponds to the "wikitable" node
-my.table = html_node(page, ".wikitable")
-# Convert the html table element into a data frame
-my.table = html_table(my.table, fill = TRUE)
-# Extracting and tidying a single column from the table and adding row names
-x = as.numeric(gsub("\\[.*","",my.table[,4]))
-names(x) = gsub("\\[.*","",my.table[,2])
-# Excluding non-states and averages from the table
-life.expectancy = x[!names(x) %in% c("United States", "Northern Mariana Islands", "Guam", "American Samoa", "Puerto Rico", "U.S. Virgin Islands")]
+```{r, warning=FALSE}
+season_link <- season_episode_count %>%
+  filter(!is.na(episodes)) %>%
+  mutate(rep_test_start=map(season_start,~{ .x %>% 
+                                          rep(season_start,episodes)
+    
+                                  })
+         # , rep_test_end=map(season_end,~{ .x %>%
+         #                                  rep(season_end,episodes)
+         # 
+         #                          })
+  ) %>% 
+  unnest(rep_test_start) %>% 
+  select(-rep_test_start) %>% 
+  mutate(ep_in_series=row_number())
 ```
 
