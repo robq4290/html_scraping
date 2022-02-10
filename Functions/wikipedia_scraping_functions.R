@@ -26,15 +26,15 @@ get_season_episode <- function(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes")
   ) %>% 
     select(2,3,5,6)%>% 
     janitor::row_to_names(row=1)%>% 
-    rename(  "season"="Season"
-             , "episodes"="Episodes"
+    rename(  "season_number"="Season"
              , "season_start"="First aired"
-             , "season_end"="Last aired") %>% 
+             , "season_end"="Last aired"
+             , "season_ep_count"="Episodes") %>% 
     mutate_at(.vars=c("season_start","season_end")
               , str_remove
               ,"\\s\\(.*$" # escape(\\) character (() after all  (.*) to end ($) 
     ) %>% 
-    mutate_at("episodes",as.double)
+    mutate_at("season_ep_count",as.double)
   ################ Episode Table ##############
   episode_table <-map_dfr(full_url, ~ { 
     .x %>% 
@@ -46,17 +46,20 @@ get_season_episode <- function(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes")
     filter(!is.na(`No.overall`)) %>% 
     select(`No.overall`:`No. inseries`) %>%
     mutate(
-      `Number in Season`=case_when(  is.na(`No. inseason`)~`No. inseries` # There was a change in naming to the page
+      episode_number=case_when(  is.na(`No. inseason`)~`No. inseries` # There was a change in naming to the page
                                      , TRUE~`No. inseason` 
       )
     ) %>%
     select(-c("No. inseason","No. inseries")) %>%  # removing columns that we wont need in the end
-    rename("air_date"="Original air date") %>% 
+    rename(  "air_date"="Original air date"
+             , "episode_title"="Title"
+             , "overall_ep_number"="No.overall"
+    ) %>% 
     mutate_at("air_date"
               , str_remove  # removes the  date contained in the parens
               ,"\\s\\(.*$" # escape(\\) character (() after all  (.*) to end ($) 
     ) %>% 
-    mutate_at( "Title"
+    mutate_at( "episode_title"
                , str_replace
                , "\\[[^\\]]*\\]\\s*" # Need to figure out why this regex works...but it does!
                ,""
@@ -66,10 +69,17 @@ get_season_episode <- function(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes")
     left_join( season_start_to_end
                ,by=c("air_date"="season_start")
     ) %>%
-    fill(season) %>%  # Default direction to fill is down
-    mutate_at( "air_date"
+    fill(season_number) %>%  # Default direction to fill is down
+    fill(season_end) %>% 
+    mutate_at(  c("air_date","season_end")
                ,str_squish  # will need to figure out why this needs to be used... but that is for another day
+    )%>% 
+    mutate_at("season_end"
+              , list(~case_when(.==air_date~1
+                                , TRUE~0)
+              )
     )
+  
   to_return <- list(  "season_table"=season_start_to_end
                     , "episode_table"=episode_table
                     , "episode_and_season_table"=episode_and_season
@@ -132,12 +142,17 @@ get_views_and_ratings <- function(wiki_url="RuPaul%27s_Drag_Race_(season_", max_
     mutate_at(c("Rating","Viewers"), as.double) %>% 
     mutate(
       `Viewers`=`Viewers`*1000000
+    )%>% 
+    rename(  "episode_title"="Title"
+             , "episode_number"="Episode"
+             , "viewer_rating"="Rating"
+             , "viewer_count"="Viewers"
     )
   
   viewership
 }
   
- get_seaon_episode_ratings <- function(){
+ get_season_episode_ratings <- function(){
    
    df_list <- get_season_episode()
    
@@ -147,7 +162,17 @@ get_views_and_ratings <- function(wiki_url="RuPaul%27s_Drag_Race_(season_", max_
    
    episodes_with_ratings <- episode_and_season %>% 
      left_join( viewership
-                , by=c("air_date","Title") 
+                , by=c("air_date","episode_title","episode_number") 
+     )%>% 
+     select(  overall_ep_number
+              , season_number
+              , episode_number
+              , episode_title
+              , air_date
+              , season_end
+              , season_ep_count
+              , viewer_rating
+              , viewer_count
      )
    
    episodes_with_ratings
