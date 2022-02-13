@@ -61,7 +61,10 @@ get_season_episode <- function(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes")
     ) %>% 
     mutate_at( "episode_title"
                , str_replace
-               , "\\[[^\\]]*\\]\\s*" # Need to figure out why this regex works...but it does!
+               , "\\[.*\\]" 
+               # \\[  Start at  [
+               # .* everything 
+               # \\] end at  ]
                ,""
     ) 
   ########## Joined Together ##############
@@ -136,7 +139,10 @@ get_views_and_ratings <- function(wiki_url="RuPaul%27s_Drag_Race_(season_", max_
     # Extract the digits and then convert to doubles
     mutate_at( c("Rating","Viewers")
                , str_replace
-               , "\\[[^\\]]*\\]\\s*" # Need to figure out why this regex works...but it does!
+               , "\\[.*\\]" 
+               # \\[  Start at  [
+               # .* everything 
+               # \\] end at  ]
                ,""
     ) %>%  
     mutate_at(c("Rating","Viewers"), as.double) %>% 

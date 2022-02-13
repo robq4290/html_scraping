@@ -153,7 +153,10 @@ viewership <- bind_rows(split(season_level_tables$season_tables,season_level_tab
   # Extract the digits and then convert to doubles
   mutate_at( c("Rating","Viewers")
             , str_replace
-            , "\\[[^\\]]*\\]\\s*" # Need to figure out why this regex works...but it does!
+            , "\\[.*\\]" 
+            # \\[  Start at  [
+            # .* everything 
+            # \\] end at  ]
             ,""
             ) %>%  
   mutate_at(c("Rating","Viewers"), as.double) %>% 
@@ -223,7 +226,10 @@ episode_table <-map_dfr(episode_url, ~ {
             ) %>% 
   mutate_at( "episode_title"
             , str_replace
-            , "\\[[^\\]]*\\]\\s*" # Need to figure out why this regex works...but it does!
+            , "\\[.*\\]" 
+            # \\[  Start at  [
+            # .* everything 
+            # \\] end at  ]
             ,""
             ) 
 ```
