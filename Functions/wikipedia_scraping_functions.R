@@ -1,12 +1,15 @@
-#' Getting the start and end dates for each season... this is a small table so it is 
-#' not too crazy of a lift to execute at the beginning of a new season
+#' Returns a table containing the start and end dates for avilable seasons of 
+#' Drag Race from Wikipedia 
 #'
-#' @param wiki_url trunk that comes after https://en.wikipedia.org/wiki/
+#' This function assumes the page follows the convention:
+#' https://en.wikipedia.org/wiki/{wiki_url}
 #'
-#' @return
-#' @export
+#' @param wiki_url URL to the Wikipedia page
 #'
-#' @examples
+#' @return The first wikitable on the page
+#' @export 
+#'
+#' @examples get_season_episode(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes")
 get_season_episode <- function(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes"){
   require(tidyverse)
   require(rvest)
@@ -91,6 +94,15 @@ get_season_episode <- function(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes")
   return(to_return)
 }
 
+#' Extracts view count and rating from each seasons wikipedia page
+#'
+#' @param wiki_url URL to the wiki
+#' @param max_seaso most recently available season 
+#'
+#' @return dataframe
+#' @export
+#'
+#' @examples get_views_and_ratings(wiki_url="RuPaul%27s_Drag_Race_(season_", max_season=14)
 get_views_and_ratings <- function(wiki_url="RuPaul%27s_Drag_Race_(season_", max_season=14){
   require(tidyverse)
   require(rvest)
@@ -159,6 +171,13 @@ get_views_and_ratings <- function(wiki_url="RuPaul%27s_Drag_Race_(season_", max_
   viewership
 }
   
+#' Joins results from the prior functions 
+#' This is going to be used as an overall summary frame for analysis 
+#'
+#' @return
+#' @export
+#'
+#' @examples
  get_season_episode_ratings <- function(){
    
    df_list <- get_season_episode()
