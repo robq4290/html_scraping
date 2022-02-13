@@ -32,7 +32,8 @@ get_season_episode <- function(wiki_url="List_of_RuPaul%27s_Drag_Race_episodes")
              , "season_ep_count"="Episodes") %>% 
     mutate_at(.vars=c("season_start","season_end")
               , str_remove
-              ,"\\s\\(.*$" # escape(\\) character (() after all  (.*) to end ($) 
+              ,"\\s\\(.*$" 
+              # Find white space followed by ( everything until the end of the string
     ) %>% 
     mutate_at("season_ep_count",as.double)
   ################ Episode Table ##############
